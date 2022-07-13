@@ -1,62 +1,20 @@
-{{/*
-Expand the name of the chart.
-*/}}
-{{- define "accounting.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{/* Generate basic labels */}}
+{{- define "app.labels" }}
+app: {{ .Values.application.labels.app | quote }}
+release: {{ .Values.application.labels.release | quote }}
+tier: {{ .Values.application.labels.tier | quote }}
+track: {{ .Values.application.labels.track | quote }}
 {{- end }}
 
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "accounting.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-{{- end }}
+
+{{- define "app.annotations" }}
+kubernetes.io/tls-acme: "true"
+cert-manager.io/cluster-issuer: "letsencrypt-prod"
 {{- end }}
 
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "accounting.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Common labels
-*/}}
-{{- define "accounting.labels" -}}
-helm.sh/chart: {{ include "accounting.chart" . }}
-{{ include "accounting.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "accounting.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "accounting.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "accounting.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "accounting.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
+{{- define "modsecurity.annotations" }}
+nginx.ingress.kubernetes.io/modsecurity-snippet: |
+  SecRuleEngine On
+  SecRule REQUEST_HEADERS:Content-Type \"text/plain\" \"log,deny,id:\'20010\',status:403,msg:\'Request with text/plain as content type is not allowed\'\"
+nginx.ingress.kubernetes.io/modsecurity-transaction-id: $server_name-$request_id
 {{- end }}

@@ -1,61 +1,129 @@
-apiVersion: apps/v1
+{{- if .Values.application.enabled }}
+apiVersion: {{ .Values.application.deploymentApiVersion | quote }}
 kind: Deployment
 metadata:
-  name: {{ include "accounting.fullname" . }}
   labels:
-    {{- include "accounting.labels" . | nindent 4 }}
+{{ include "app.labels" . | indent 4 }}
+  name: {{ .Values.application.name | quote }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: {{ .Values.application.replicaCount }}
   selector:
     matchLabels:
-      {{- include "accounting.selectorLabels" . | nindent 6 }}
+{{ include "app.labels" . | indent 6 }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
-        {{- include "accounting.selectorLabels" . | nindent 8 }}
+{{ include "app.labels" . | indent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      serviceAccountName: {{ include "accounting.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      - envFrom:
+{{- if .Values.application.secret.enabled }}
+        - secretRef:
+            name: {{ .Values.application.secret.name }}
+{{- end }}
+        image: "{{ .Values.application.image.repository }}:{{ .Values.application.image.tag }}"
+        imagePullPolicy: {{ .Values.application.image.pullPolicy }}
+        name: {{ .Values.application.containername }}
+{{- if .Values.application.livenessProbe.enabled }}
+        livenessProbe:
+          failureThreshold: 3
+{{- if .Values.application.livenessProbe.httpGet }}
+          httpGet:
+            path: {{ .Values.application.livenessProbe.path }}
+            port: {{ .Values.application.livenessProbe.port }}
+            scheme: {{ .Values.application.livenessProbe.scheme }}
+{{- end }}
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 15
+{{- end }}
+{{- if .Values.application.readinessProbe.enabled }}
+        readinessProbe:
+          failureThreshold: 3
+{{- if .Values.application.readinessProbe.httpGet }}
+          httpGet:
+            path: {{ .Values.application.readinessProbe.path }}
+            port: {{ .Values.application.readinessProbe.port }}
+            scheme: {{ .Values.application.readinessProbe.scheme }}
+{{- end }}
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 15
+{{- end }}
+{{- if .Values.application.ports.enabled }}
+        ports:
+        - containerPort: {{ .Values.application.ports.containerPort }}
+          name: {{ .Values.application.ports.name }}
+          protocol: {{ .Values.application.ports.protocol }}
+{{- end }}
+{{- if .Values.application.resources.enabled }}
+        resources: 
+{{- if .Values.application.resources.requests.enabled }}
+          requests:
+{{- if .Values.application.resources.requests.memory.enabled }}
+            memory: {{ .Values.application.resources.requests.memory.value }}
+{{- end }}
+{{- if .Values.application.resources.requests.cpu.enabled }}
+            cpu: {{ .Values.application.resources.requests.cpu.value }}
+{{- end }}
+{{- end }}
+{{- if .Values.application.resources.limits.enabled }}
+          limits:
+{{- if .Values.application.resources.limits.memory.enabled }}
+            memory: {{ .Values.application.resources.limits.memory.value }}
+{{- end }}
+{{- if .Values.application.resources.limits.cpu.enabled }}
+            cpu: {{ .Values.application.resources.limits.cpu.value }}
+{{- end }}
+{{- end }}
+{{- end }}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+{{- if .Values.jaegerSideCar.enabled }}
+      - name: jaeger-agent
+        image: {{ .Values.jaegerSideCar.image | quote }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5775
+          name: zk-compact-trft
+          protocol: UDP
+        - containerPort: 5778
+          name: config-rest
+          protocol: TCP
+        - containerPort: 6831
+          name: jg-compact-trft
+          protocol: UDP
+        - containerPort: 6832
+          name: jg-binary-trft
+          protocol: UDP
+        - containerPort: 14271
+          name: admin-http
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 50M
+          requests:
+            cpu: 100m
+            memory: 50M
+        args:
+        - --reporter.grpc.host-port={{ .Values.jaegerSideCar.service }}
+        - --reporter.type=grpc
+{{- end }}        
+      dnsPolicy: ClusterFirst
+{{- if .Values.imagePullSecret.enabled }}
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecret.name }}
+{{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+{{- end }}

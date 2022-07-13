@@ -1,82 +1,121 @@
-# Default values for accounting.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+application:
+  enabled: true
+  deploymentApiVersion: apps/v1
+  labels:
+    tier: web
+    app: accounting
+    release: rapidcircle
+    track: stable
+  name: accounting
+  replicaCount: 1
+  secret:
+    enabled: true
+    name: accounting-secret
+  image:
+    pullPolicy: IfNotPresent
+  containername: accounting-container
+  livenessProbe:
+    enabled: true
+    httpGet: true
+    path: /ready
+    port: 5000
+    scheme: HTTP
+  readinessProbe:
+    enabled: true
+    httpGet: true
+    path: /live
+    port: 5000
+    scheme: HTTP
+  ports:
+    enabled: true
+    containerPort: 5000
+    name: web
+    protocol: TCP
+  resources:
+    enabled: true
+    requests:
+      enabled: true
+      memory:
+        enabled: true
+        value: 650Mi
+      cpu:
+        enabled: true
+        value: 250m
+    limits:
+      enabled: true
+      memory:
+        enabled: true
+        value: 750Mi
+      cpu:
+        enabled: true
+        value: 350m
 
-replicaCount: 1
-
-image:
-  repository: nginx
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
-podAnnotations: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-service:
-  type: ClusterIP
-  port: 80
+imagePullSecret:
+  enabled: true
+  name: gitlab-imagepullsecret
 
 ingress:
+  enabled: true
+  name: ingress-accounting
+  rule1:
+    enabled: true
+    host: accounting
+    domain: dummy-val
+  rule2:
+    enabled: false
+  modsecurityannotations:
+    enabled: false
+  tlssecretname: tls-accounting
+  externalcert:
+    enabled: true
+    cert: ZHVtbXktdmFs
+    key: ZHVtbXktdmFs
+secret:
+  enabled: true
+  name: accounting-secret
+  stringdata:
+    NODE_ENV: production
+  data:
+    SERVICE_CONFIG: eyJzdGFnZSI6ImRldiIsIm5hdHMiOnsiaG9zdCI6Imthcm1hLW5hdHMuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbCIsInN0YW5DbHVzdGVyTmFtZSI6Imthcm1hLXN0YW4ifSwicHJpc21hIjp7Imhvc3QiOiJwcmlzbWEuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbCIsInNlY3JldCI6Ik1VVlp4aTh2UjVOdDduWWpXaTdYSzV4ajdRcWcza2ZFIn0sImludGVybmFsR3JhcGhxbEFwaSI6eyJ1cmkiOiJodHRwOi8vcmV2aWV3LWRldi1pbnRlcm4tNWF0M21mLWF1dG8tZGVwbG95LmdyYXBocWwtZ2F0ZXdheS0xNjc4NDA2Ni1yZXZpZXctZGV2LWludGVybi01YXQzbWY6NDAwMCIsImxvZ2luSWQiOiIrNDQ4NTgyMzEwNjE2Iiwic2VjcmV0IjoiS2FybWFBZG1pbjEhIiwiYXV0aFRva2VuIjoiIn0sImZpbGVzU2VydmljZSI6eyJ1cmkiOiJodHRwOi8vZm1zdmMuZmlsZS1tYW5hZ2VyOjUwMDAifSwibG9nZ2VyIjp7ImtleSI6Imh0dHBzOi8vYTFiNDM4MGRiYjU0NGI2Yzg1YTEzYTJkNDkxNTJiZmZAc2VudHJ5LmlvLzUxNzI2ODkiLCJzdGFnZSI6IlNUQUdJTkcifX0=
+    SERVICE_DATABASE_CONNECTION_PARAMS: IiI=
+
+serviceClusterIP:
   enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  name: accounting-service
+  port1name: web
+  port1port: 5000
+  port1protocol: TCP
+  port1targetPort: 5000
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-autoscaling:
+testPod:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
-nodeSelector: {}
+external:
+  postgres:
+    enabled: false
 
-tolerations: []
+jaegerSideCar:
+  enabled: true
+  image: jaegertracing/jaeger-agent:1.30.0
+  service: dns:///jaeger-cr-collector-headless.observability:14250
 
-affinity: {}
+hpa:
+  enabled: true
+  name: accounting-hpa
+  deploymentName: accounting
+  minReplicas: 2
+  maxReplicas: 10
+  cpuAvgConsumption: 60
+  memAvgConsumption: 60
+
+istionw:
+  vsenabled: true
+  drenabled: true
+  localservicefqdn: accounting-service.accounting.svc.cluster.local
+  localserviceport: 5000
+  vsname: accounting-vs
+  drname: accounting-dr
+  drmaxConnections: 10
+  drmaxRequestsPerConnection: 10
+  vsRetryAttempts: 10
+  vsPerTryTimeout: 2s

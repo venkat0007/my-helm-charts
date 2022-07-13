@@ -1,0 +1,23 @@
+{{- if .Values.istionw.vsenabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Values.istionw.vsname }}
+spec:
+  hosts:
+  - {{ printf "%s.%s" .Values.ingress.rule1.host .Values.ingress.rule1.domain }}
+  gateways:
+  - mesh
+  - istio-system/default-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: {{ .Values.istionw.localservicefqdn }}
+        port:
+          number: {{ .Values.istionw.localserviceport }}
+    retries:
+      attempts: {{ .Values.istionw.vsRetryAttempts }}
+{{- end }}

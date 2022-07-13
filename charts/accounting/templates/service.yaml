@@ -1,15 +1,18 @@
+{{- if .Values.serviceClusterIP.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "accounting.fullname" . }}
   labels:
-    {{- include "accounting.labels" . | nindent 4 }}
+{{ include "app.labels" . | indent 4 }}
+  name: {{ .Values.serviceClusterIP.name | quote }}
 spec:
-  type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+  - name: {{ .Values.serviceClusterIP.port1name }}
+    port: {{ .Values.serviceClusterIP.port1port }}
+    protocol: {{ .Values.serviceClusterIP.port1protocol }}
+    targetPort: {{ .Values.serviceClusterIP.port1targetPort }}
   selector:
-    {{- include "accounting.selectorLabels" . | nindent 4 }}
+{{ include "app.labels" . | indent 4 }}
+  sessionAffinity: None
+  type: ClusterIP
+{{- end }}
