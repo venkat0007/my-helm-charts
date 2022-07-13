@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  auditing:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2022-07-13T11:46:24.6196763+05:30"
+    description: A Helm chart for Kubernetes
+    digest: 9acfc560a1d0ebcd04e04113df495665d63d505f8b488b0e298523a7fcd4fe5b
+    name: auditing
+    type: application
+    urls:
+    - https://venkat0007.github.io/my-helm-charts/auditing-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-07-13T11:46:24.6154336+05:30"
