@@ -6,13 +6,13 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/redirect-entry-point: https
 {{- if not .Values.ingress.externalcert.enabled }}
-{{ include "accounting.annotations" . | indent 4 }}
+{{ include "auditing.annotations" . | indent 4 }}
 {{- end }}
 {{- if .Values.ingress.modsecurityannotations.enabled }}
 {{ include "modsecurity.annotations" . | indent 4 }}
 {{- end }}
   labels:
-  name:  ingress-accounting
+  name:  ingress-auditing
 spec:
   rules:
 {{- if .Values.ingress.enabled }}

@@ -3,17 +3,17 @@ application:
   deploymentApiVersion: apps/v1
   labels:
     tier: web
-    app: accounting
+    app: auditing
     release: rapidcircle
     track: stable
-  name: accounting
+  name: auditing
   replicaCount: 1
   secret:
     enabled: true
-    name: accounting-secret
+    name: auditing-secret
   image:
     pullPolicy: IfNotPresent
-  containername: accounting-container
+  containername: auditing-container
   livenessProbe:
     enabled: true
     httpGet: true
@@ -56,23 +56,23 @@ imagePullSecret:
 
 ingress:
   enabled: true
-  name: ingress-accounting
+  name: ingress-auditing
   rule1:
     enabled: true
-    host: accounting
+    host: auditing
     domain: dummy-val
   rule2:
     enabled: false
   modsecurityannotations:
     enabled: false
-  tlssecretname: tls-accounting
+  tlssecretname: tls-auditing
   externalcert:
     enabled: true
     cert: ZHVtbXktdmFs
     key: ZHVtbXktdmFs
 secret:
   enabled: true
-  name: accounting-secret
+  name: auditing-secret
   stringdata:
     NODE_ENV: production
   data:
@@ -81,7 +81,7 @@ secret:
 
 serviceClusterIP:
   enabled: false
-  name: accounting-service
+  name: auditing-service
   port1name: web
   port1port: 5000
   port1protocol: TCP
@@ -101,8 +101,8 @@ jaegerSideCar:
 
 hpa:
   enabled: true
-  name: accounting-hpa
-  deploymentName: accounting
+  name: auditing-hpa
+  deploymentName: auditing
   minReplicas: 2
   maxReplicas: 10
   cpuAvgConsumption: 60
@@ -111,10 +111,10 @@ hpa:
 istionw:
   vsenabled: true
   drenabled: true
-  localservicefqdn: accounting-service.accounting.svc.cluster.local
+  localservicefqdn: auditing-service.auditing.svc.cluster.local
   localserviceport: 5000
-  vsname: accounting-vs
-  drname: accounting-dr
+  vsname: auditing-vs
+  drname: auditing-dr
   drmaxConnections: 10
   drmaxRequestsPerConnection: 10
   vsRetryAttempts: 10
