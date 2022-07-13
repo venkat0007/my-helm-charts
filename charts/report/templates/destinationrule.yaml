@@ -1,0 +1,16 @@
+{{- if .Values.istionw.drenabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: {{ .Values.istionw.drname }}
+spec:
+  host: {{ .Values.istionw.localservicefqdn }}
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: {{ .Values.istionw.drmaxConnections }}
+      http:
+        maxRequestsPerConnection: {{ .Values.istionw.drmaxRequestsPerConnection }}
+{{- end }}

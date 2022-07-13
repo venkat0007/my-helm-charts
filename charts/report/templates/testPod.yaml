@@ -1,0 +1,17 @@
+{{- if .Values.testPod.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+spec:
+  containers:
+  - name: test-container
+    image: governmentpaas/psql:latest
+    command: ['sh', '-c', 'tail -f /dev/null']
+    securityContext:
+      runAsUser: 0
+      privileged: true
+
+{{- end }}
+
+# psql -h dev-do-user-7489324-0.a.db.ondigitalocean.com -p 25060 -U doadmin -W defaultdb

@@ -1,0 +1,18 @@
+{{- if .Values.serviceClusterIP.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+{{ include "app.labels" . | indent 4 }}
+  name: {{ .Values.serviceClusterIP.name | quote }}
+spec:
+  ports:
+  - name: {{ .Values.serviceClusterIP.port1name }}
+    port: {{ .Values.serviceClusterIP.port1port }}
+    protocol: {{ .Values.serviceClusterIP.port1protocol }}
+    targetPort: {{ .Values.serviceClusterIP.port1targetPort }}
+  selector:
+{{ include "app.labels" . | indent 4 }}
+  sessionAffinity: None
+  type: ClusterIP
+{{- end }}
