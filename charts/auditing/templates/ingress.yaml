@@ -1,0 +1,31 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+{{- if not .Values.ingress.externalcert.enabled }}
+{{ include "auditing.annotations" . | indent 4 }}
+{{- end }}
+{{- if .Values.ingress.modsecurityannotations.enabled }}
+{{ include "modsecurity.annotations" . | indent 4 }}
+{{- end }}
+  labels:
+  name:  ingress-auditing
+spec:
+  rules:
+{{- if .Values.ingress.enabled }}
+  - host: {{ printf "%s.%s" .Values.ingress.rule1.host  .Values.ingress.rule1.domain }}
+    http:
+      paths:
+      - backend:
+          serviceName: {{ .Values.serviceClusterIP.name | quote }}
+          servicePort: {{ .Values.serviceClusterIP.port1port }}
+        path: /
+{{- end }}
+  tls:
+  - hosts:
+    - {{ printf "%s.%s" .Values.ingress.rule1.host .Values.ingress.rule1.domain }}
+    secretName: {{ .Values.ingress.tlssecretname | quote }}
+{{- end }}

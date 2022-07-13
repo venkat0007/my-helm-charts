@@ -1,0 +1,121 @@
+application:
+  enabled: true
+  deploymentApiVersion: apps/v1
+  labels:
+    tier: web
+    app: auditing
+    release: rapidcircle
+    track: stable
+  name: auditing
+  replicaCount: 1
+  secret:
+    enabled: true
+    name: auditing-secret
+  image:
+    pullPolicy: IfNotPresent
+  containername: auditing-container
+  livenessProbe:
+    enabled: true
+    httpGet: true
+    path: /ready
+    port: 5000
+    scheme: HTTP
+  readinessProbe:
+    enabled: true
+    httpGet: true
+    path: /live
+    port: 5000
+    scheme: HTTP
+  ports:
+    enabled: true
+    containerPort: 5000
+    name: web
+    protocol: TCP
+  resources:
+    enabled: true
+    requests:
+      enabled: true
+      memory:
+        enabled: true
+        value: 650Mi
+      cpu:
+        enabled: true
+        value: 250m
+    limits:
+      enabled: true
+      memory:
+        enabled: true
+        value: 750Mi
+      cpu:
+        enabled: true
+        value: 350m
+
+imagePullSecret:
+  enabled: true
+  name: gitlab-imagepullsecret
+
+ingress:
+  enabled: true
+  name: ingress-auditing
+  rule1:
+    enabled: true
+    host: auditing
+    domain: dummy-val
+  rule2:
+    enabled: false
+  modsecurityannotations:
+    enabled: false
+  tlssecretname: tls-auditing
+  externalcert:
+    enabled: true
+    cert: ZHVtbXktdmFs
+    key: ZHVtbXktdmFs
+secret:
+  enabled: true
+  name: auditing-secret
+  stringdata:
+    NODE_ENV: production
+  data:
+    SERVICE_CONFIG: eyJzdGFnZSI6ImRldiIsIm5hdHMiOnsiaG9zdCI6Imthcm1hLW5hdHMuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbCIsInN0YW5DbHVzdGVyTmFtZSI6Imthcm1hLXN0YW4ifSwicHJpc21hIjp7Imhvc3QiOiJwcmlzbWEuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbCIsInNlY3JldCI6Ik1VVlp4aTh2UjVOdDduWWpXaTdYSzV4ajdRcWcza2ZFIn0sImludGVybmFsR3JhcGhxbEFwaSI6eyJ1cmkiOiJodHRwOi8vcmV2aWV3LWRldi1pbnRlcm4tNWF0M21mLWF1dG8tZGVwbG95LmdyYXBocWwtZ2F0ZXdheS0xNjc4NDA2Ni1yZXZpZXctZGV2LWludGVybi01YXQzbWY6NDAwMCIsImxvZ2luSWQiOiIrNDQ4NTgyMzEwNjE2Iiwic2VjcmV0IjoiS2FybWFBZG1pbjEhIiwiYXV0aFRva2VuIjoiIn0sImZpbGVzU2VydmljZSI6eyJ1cmkiOiJodHRwOi8vZm1zdmMuZmlsZS1tYW5hZ2VyOjUwMDAifSwibG9nZ2VyIjp7ImtleSI6Imh0dHBzOi8vYTFiNDM4MGRiYjU0NGI2Yzg1YTEzYTJkNDkxNTJiZmZAc2VudHJ5LmlvLzUxNzI2ODkiLCJzdGFnZSI6IlNUQUdJTkcifX0=
+    SERVICE_DATABASE_CONNECTION_PARAMS: IiI=
+
+serviceClusterIP:
+  enabled: false
+  name: auditing-service
+  port1name: web
+  port1port: 5000
+  port1protocol: TCP
+  port1targetPort: 5000
+
+testPod:
+  enabled: false
+
+external:
+  postgres:
+    enabled: false
+
+jaegerSideCar:
+  enabled: true
+  image: jaegertracing/jaeger-agent:1.30.0
+  service: dns:///jaeger-cr-collector-headless.observability:14250
+
+hpa:
+  enabled: true
+  name: auditing-hpa
+  deploymentName: auditing
+  minReplicas: 2
+  maxReplicas: 10
+  cpuAvgConsumption: 60
+  memAvgConsumption: 60
+
+istionw:
+  vsenabled: true
+  drenabled: true
+  localservicefqdn: auditing-service.auditing.svc.cluster.local
+  localserviceport: 5000
+  vsname: auditing-vs
+  drname: auditing-dr
+  drmaxConnections: 10
+  drmaxRequestsPerConnection: 10
+  vsRetryAttempts: 10
+  vsPerTryTimeout: 2s
